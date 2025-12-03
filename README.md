@@ -311,4 +311,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT
+[MIT](LICENSE) - Free to use, modify, and distribute.
+
+
