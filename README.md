@@ -27,6 +27,12 @@ Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/d
 
 ## Installation
 
+### Quick Install (Claude Code CLI)
+
+```bash
+claude mcp add alertmanager -e ALERTMANAGER_URL="http://localhost:9093" -- npx -y mcp-alertmanager@latest
+```
+
 ### Claude Code
 
 Add to `~/.claude/settings.json`:
