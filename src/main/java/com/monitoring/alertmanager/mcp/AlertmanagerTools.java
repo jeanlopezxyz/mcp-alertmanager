@@ -39,7 +39,7 @@ public class AlertmanagerTools {
         @ToolArg(description = "Label filter in format 'key=value'. Examples: 'severity=critical', 'namespace=production', 'team=platform'") String filterLabel
     ) {
         // If no filters specified, default to showing active alerts
-        if (active == null && silenced == null && inhibited == null && filterLabel == null) {
+        if (active == null && silenced == null && inhibited == null && (filterLabel == null || filterLabel.isEmpty())) {
             return alertmanagerService.getActiveAlerts();
         }
         return alertmanagerService.getAlerts(active, silenced, inhibited, filterLabel);

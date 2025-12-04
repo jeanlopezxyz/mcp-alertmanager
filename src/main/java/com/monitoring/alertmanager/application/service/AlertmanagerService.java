@@ -42,7 +42,7 @@ public class AlertmanagerService {
     public String getAlerts(Boolean active, Boolean silenced, Boolean inhibited, String filterLabel) {
         LOG.infof("Getting alerts - active: %s, silenced: %s, inhibited: %s", active, silenced, inhibited);
         try {
-            List<String> filter = filterLabel != null ? List.of(filterLabel) : null;
+            List<String> filter = (filterLabel != null && !filterLabel.isEmpty()) ? List.of(filterLabel) : null;
             List<AlertDto> alerts = alertmanagerClient.getAlerts(active, silenced, inhibited, null, filter, null);
             return formatAlerts(alerts, "Alerts");
         } catch (Exception e) {
