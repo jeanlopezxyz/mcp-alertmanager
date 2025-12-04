@@ -1,6 +1,7 @@
 package com.monitoring.alertmanager.infrastructure.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,7 +24,7 @@ public record SilenceDto(
     public record MatcherDto(
         String name,
         String value,
-        boolean isRegex,
-        boolean isEqual
+        @JsonProperty("isRegex") boolean isRegex,
+        @JsonProperty("isEqual") boolean isEqual
     ) {}
 }

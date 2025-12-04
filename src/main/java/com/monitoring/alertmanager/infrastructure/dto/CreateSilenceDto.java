@@ -1,5 +1,6 @@
 package com.monitoring.alertmanager.infrastructure.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public record CreateSilenceDto(
@@ -12,7 +13,7 @@ public record CreateSilenceDto(
     public record MatcherDto(
         String name,
         String value,
-        boolean isRegex,
-        boolean isEqual
+        @JsonProperty("isRegex") boolean isRegex,
+        @JsonProperty("isEqual") boolean isEqual
     ) {}
 }
