@@ -4,6 +4,7 @@
 [![npm version](https://img.shields.io/npm/v/mcp-alertmanager)](https://www.npmjs.com/package/mcp-alertmanager)
 [![Java](https://img.shields.io/badge/Java-21+-orange)](https://adoptium.net/)
 [![GitHub release](https://img.shields.io/github/v/release/jeanlopezxyz/mcp-alertmanager)](https://github.com/jeanlopezxyz/mcp-alertmanager/releases/latest)
+[![Docker](https://img.shields.io/badge/ghcr.io-latest-blue?logo=docker)](https://github.com/jeanlopezxyz/mcp-alertmanager/pkgs/container/mcp-alertmanager)
 
 A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for Prometheus Alertmanager integration.
 
