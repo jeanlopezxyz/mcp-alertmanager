@@ -1,5 +1,25 @@
-*
-!target/*-runner
-!target/*-runner.jar
-!target/lib/*
-!target/quarkus-app/*
+# Ignore git
+.git
+.gitignore
+
+# Ignore IDE files
+.idea
+*.iml
+.vscode
+.project
+.classpath
+.settings
+
+# Ignore build artifacts (will be rebuilt in container)
+target
+
+# Ignore npm package (not needed for Docker build)
+npm
+
+# Ignore docs
+*.md
+docs
+LICENSE
+
+# Ignore GitHub Actions
+.github
