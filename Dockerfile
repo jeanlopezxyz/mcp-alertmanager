@@ -1,0 +1,65 @@
+# =============================================================================
+# MCP AlertManager Server - Quarkus Native Multi-stage Build
+# =============================================================================
+# Builds a native executable using Mandrel (Red Hat's GraalVM distribution)
+# and deploys on the smallest possible image (ubi9-quarkus-micro-image)
+#
+# Build:
+#   docker build -t ghcr.io/jeanlopezxyz/mcp-alertmanager .
+#
+# Run:
+#   docker run -i --rm -p 9082:9082 -e ALERTMANAGER_URL=http://alertmanager:9093 ghcr.io/jeanlopezxyz/mcp-alertmanager
+#
+# Image size: ~50-100MB (vs ~400MB with JVM)
+# Startup time: ~50ms (vs ~2s with JVM)
+# =============================================================================
+
+# Stage 1: Build Native Executable
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS build
+
+USER root
+WORKDIR /build
+
+# Copy Maven wrapper and configuration
+COPY --chown=quarkus:quarkus mvnw .
+COPY --chown=quarkus:quarkus .mvn .mvn
+COPY --chown=quarkus:quarkus pom.xml .
+
+# Download dependencies (cached layer)
+USER quarkus
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY --chown=quarkus:quarkus src src
+
+# Build native executable
+RUN ./mvnw package -DskipTests -Dnative -B
+
+# Stage 2: Runtime (Micro Image - smallest possible)
+FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+
+LABEL maintainer="Jean Lopez"
+LABEL description="MCP Server for Prometheus AlertManager (Native)"
+LABEL io.k8s.display-name="MCP AlertManager Server"
+LABEL io.openshift.tags="mcp,alertmanager,monitoring,alerts,quarkus,native"
+
+WORKDIR /work/
+
+# Setup permissions
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+
+# Copy native executable from build stage
+COPY --from=build --chown=1001:root --chmod=0755 /build/target/*-runner /work/application
+
+EXPOSE 9082
+
+USER 1001
+
+# Environment variables
+ENV QUARKUS_HTTP_HOST=0.0.0.0
+ENV QUARKUS_HTTP_PORT=9082
+ENV ALERTMANAGER_URL=http://alertmanager:9093
+
+ENTRYPOINT ["./application"]
