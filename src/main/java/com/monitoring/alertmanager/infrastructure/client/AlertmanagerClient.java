@@ -3,12 +3,14 @@ package com.monitoring.alertmanager.infrastructure.client;
 import com.monitoring.alertmanager.infrastructure.dto.*;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import java.util.List;
 
 @Path("/api/v2")
 @RegisterRestClient(configKey = "alertmanager-api")
+@RegisterClientHeaders(KubernetesBearerTokenHeaderFactory.class)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface AlertmanagerClient {
