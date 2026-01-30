@@ -114,7 +114,7 @@ Endpoint: `http://localhost:9082/mcp/sse`
 
 ## Tools
 
-This server provides **7 tools** organized in 3 categories:
+This server provides **10 tools** organized in 4 categories:
 
 ### Alerts
 
@@ -128,73 +128,63 @@ Get alerts from Alertmanager. Without filters, returns active/firing alerts.
 | `inhibited` | boolean | No | Show inhibited alerts |
 | `filterLabel` | string | No | Filter by label (e.g., `severity=critical`) |
 
-**Examples:**
-- Active alerts: `getAlerts` (no parameters)
-- Critical alerts: `getAlerts filterLabel='severity=critical'`
-- Silenced alerts: `getAlerts silenced=true`
-
----
-
 #### `getAlertGroups`
-Get alerts grouped by their routing labels. Shows how Alertmanager batches alerts for notifications.
-
-**Parameters:** None
-
-**Returns:** Alert groups with receiver and alert counts.
+Get alerts grouped by routing labels. Shows how alerts are batched for notifications.
 
 ---
 
 ### Silences
 
 #### `getSilences`
-Get silences from Alertmanager. Silences suppress notifications for matching alerts.
+Get silences from Alertmanager. Silences suppress notifications.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `state` | string | No | Filter: `active`, `pending`, or `expired` |
-
-**Returns:** List of silences with matchers, expiration, and creator.
-
----
+| `state` | string | No | Filter: `active`, `pending`, `expired` |
 
 #### `createSilence`
-Create a silence to suppress notifications for an alert.
+Create a silence to suppress notifications for an alert. Max 30 days.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `alertName` | string | Yes | Alert name to silence (exact match) |
+| `alertName` | string | Yes | Alert name to silence |
 | `duration` | string | No | Duration: `30m`, `2h`, `1d` (default: `2h`) |
 | `comment` | string | No | Reason for silencing |
 | `createdBy` | string | No | Your name/identifier |
 
-**Examples:**
-- Silence for 2 hours: `createSilence alertName='HighMemoryUsage'`
-- Silence for maintenance: `createSilence alertName='DiskSpaceLow' duration='1d' comment='Scheduled maintenance'`
-
----
-
 #### `deleteSilence`
-Delete/expire a silence by ID. The alert will resume firing notifications if still active.
+Delete/expire a silence by ID.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `silenceId` | string | Yes | Silence ID to delete |
+| `silenceId` | string | Yes | Silence UUID |
 
 ---
 
 ### Status
 
 #### `getAlertmanagerStatus`
-Get Alertmanager cluster status: version, uptime, cluster peers, and configuration.
+Get Alertmanager server status: version, uptime, cluster info.
 
-**Parameters:** None
+#### `getReceivers`
+List configured notification receivers (Slack, email, PagerDuty, etc.).
 
 ---
 
-#### `getReceivers`
-Get configured notification receivers (email, Slack, PagerDuty, webhooks).
+### Intelligent Troubleshooting
 
-**Parameters:** None
+#### `getAlertingSummary`
+Get executive summary of all alerts: counts by severity, top alerts, affected namespaces. **Use as first step for incident response.**
+
+#### `getCriticalAlerts`
+Get critical severity alerts only with full context. Prioritized for incident response.
+
+#### `investigateAlert`
+Deep investigation of a specific alert: all instances, duration, labels, silences, recommendations.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `alertName` | string | Yes | Alert name to investigate |
 
 ---
 
