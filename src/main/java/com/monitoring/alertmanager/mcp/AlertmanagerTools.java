@@ -5,103 +5,177 @@ import io.quarkiverse.mcp.server.Tool;
 import io.quarkiverse.mcp.server.ToolArg;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
+
+import static com.monitoring.alertmanager.AlertmanagerConstants.DEFAULT_SILENCE_COMMENT;
+import static com.monitoring.alertmanager.AlertmanagerConstants.DEFAULT_SILENCE_CREATOR;
+import static com.monitoring.alertmanager.AlertmanagerConstants.DEFAULT_SILENCE_DURATION;
+import static com.monitoring.alertmanager.AlertmanagerConstants.MAX_NAME_LENGTH;
 
 /**
  * MCP Tools for Prometheus Alertmanager operations.
- *
- * This server enables AI assistants to monitor, manage, and respond to alerts
- * in your infrastructure. Use it to check what's firing, silence noisy alerts
- * during maintenance, and understand your notification routing.
- *
- * Provides 7 tools in 3 categories:
- * - Alerts: getAlerts, getAlertGroups
- * - Silences: getSilences, createSilence, deleteSilence
- * - Status: getAlertmanagerStatus, getReceivers
  */
 @ApplicationScoped
 public class AlertmanagerTools {
 
+    private static final Logger LOG = Logger.getLogger(AlertmanagerTools.class);
+
     @Inject
     AlertmanagerService alertmanagerService;
 
-    // =========================================================================
-    // Alert Tools
-    // =========================================================================
-
-    @Tool(description = "Retrieve alerts from Alertmanager. Returns currently firing alerts by default. "
-            + "Use this to: check what's wrong in your infrastructure, find critical issues, "
-            + "identify silenced alerts, or filter alerts by severity/namespace/team. "
-            + "Examples: 'show all alerts', 'what critical alerts are firing?', 'show silenced alerts in production'")
+    @Tool(description = "Get alerts from Alertmanager. Returns active alerts by default. "
+            + "Filter by: active, silenced, inhibited, or label (e.g., 'severity=critical').")
     public String getAlerts(
-        @ToolArg(description = "Include active/firing alerts (default: true when no filters specified)") Boolean active,
-        @ToolArg(description = "Include silenced alerts (notifications suppressed)") Boolean silenced,
-        @ToolArg(description = "Include inhibited alerts (suppressed by other alerts)") Boolean inhibited,
-        @ToolArg(description = "Label filter in format 'key=value'. Examples: 'severity=critical', 'namespace=production', 'team=platform'") String filterLabel
-    ) {
-        // If no filters specified, default to showing active alerts
-        if (active == null && silenced == null && inhibited == null && (filterLabel == null || filterLabel.isEmpty())) {
-            return alertmanagerService.getActiveAlerts();
+            @ToolArg(description = "Include active alerts") Boolean active,
+            @ToolArg(description = "Include silenced alerts") Boolean silenced,
+            @ToolArg(description = "Include inhibited alerts") Boolean inhibited,
+            @ToolArg(description = "Label filter: 'key=value'") String filterLabel) {
+        try {
+            boolean noFilters = active == null && silenced == null
+                    && inhibited == null && (filterLabel == null || filterLabel.isBlank());
+            if (noFilters) {
+                return alertmanagerService.getActiveAlerts();
+            }
+            return alertmanagerService.getAlerts(active, silenced, inhibited, filterLabel);
+        } catch (Exception e) {
+            LOG.errorf("Get alerts failed: %s", e.getMessage());
+            return formatError("Failed to get alerts", e);
         }
-        return alertmanagerService.getAlerts(active, silenced, inhibited, filterLabel);
     }
 
-    @Tool(description = "Get alerts organized by their routing groups. Shows how Alertmanager batches alerts "
-            + "before sending to receivers. Use this to: understand alert grouping, see which alerts go together, "
-            + "debug notification routing. Each group shares the same receiver and notification timing.")
+    @Tool(description = "Get alerts grouped by routing labels. Shows how alerts are batched for notifications.")
     public String getAlertGroups() {
-        return alertmanagerService.getAlertGroups();
+        try {
+            return alertmanagerService.getAlertGroups();
+        } catch (Exception e) {
+            LOG.errorf("Get alert groups failed: %s", e.getMessage());
+            return formatError("Failed to get alert groups", e);
+        }
     }
 
-    // =========================================================================
-    // Silence Tools
-    // =========================================================================
-
-    @Tool(description = "List silences that suppress alert notifications. Silences temporarily mute alerts "
-            + "matching specific criteria. Use this to: see what's being silenced, check maintenance windows, "
-            + "find who silenced an alert and why, review expired silences. "
-            + "Filter by state: 'active' (currently suppressing), 'pending' (scheduled), 'expired' (past).")
-    public String getSilences(
-        @ToolArg(description = "Filter by silence state: 'active' (currently suppressing), 'pending' (future), 'expired' (past), or omit for all") String state
-    ) {
-        return alertmanagerService.getSilences(state);
+    @Tool(description = "List silences. Filter by state: 'active', 'pending', 'expired', or omit for all.")
+    public String getSilences(@ToolArg(description = "State: 'active', 'pending', 'expired'") String state) {
+        try {
+            String validState = parseState(state, "active", "pending", "expired");
+            return alertmanagerService.getSilences(validState);
+        } catch (Exception e) {
+            LOG.errorf("Get silences failed: %s", e.getMessage());
+            return formatError("Failed to get silences", e);
+        }
     }
 
-    @Tool(description = "Create a silence to temporarily suppress notifications for a specific alert. "
-            + "Use this for: planned maintenance windows, known issues being worked on, noisy alerts during incidents. "
-            + "The alert continues to fire but notifications are suppressed until the silence expires.")
+    @Tool(description = "Create a silence for an alert. Duration format: '30m', '2h', '1d'. Max 30 days.")
     public String createSilence(
-        @ToolArg(description = "Exact alert name to silence (matches alertname label). Example: 'HighMemoryUsage', 'PodCrashLooping'") String alertName,
-        @ToolArg(description = "How long to silence: '30m' (30 minutes), '2h' (2 hours), '1d' (1 day). Default: 2h") String duration,
-        @ToolArg(description = "Reason for silencing - be descriptive for teammates. Example: 'Scheduled DB maintenance', 'Known issue, fix in progress'") String comment,
-        @ToolArg(description = "Who is creating this silence. Example: 'jsmith', 'oncall-team'") String createdBy
-    ) {
-        return alertmanagerService.createSilence(alertName, duration, comment, createdBy);
+            @ToolArg(description = "Alert name to silence") String alertName,
+            @ToolArg(description = "Duration: '30m', '2h', '1d'") String duration,
+            @ToolArg(description = "Reason for silence") String comment,
+            @ToolArg(description = "Creator name") String createdBy) {
+        if (alertName == null || alertName.isBlank()) {
+            return "Error: alertName is required";
+        }
+        if (alertName.length() > MAX_NAME_LENGTH) {
+            return "Error: alertName too long (max " + MAX_NAME_LENGTH + " chars)";
+        }
+
+        try {
+            String validDuration = (duration == null || duration.isBlank()) ? DEFAULT_SILENCE_DURATION : duration.trim();
+            String validComment = (comment == null || comment.isBlank()) ? DEFAULT_SILENCE_COMMENT : comment.trim();
+            String validCreator = (createdBy == null || createdBy.isBlank()) ? DEFAULT_SILENCE_CREATOR : createdBy.trim();
+            return alertmanagerService.createSilence(alertName.trim(), validDuration, validComment, validCreator);
+        } catch (Exception e) {
+            LOG.errorf("Create silence failed: %s", e.getMessage());
+            return formatError("Failed to create silence", e);
+        }
     }
 
-    @Tool(description = "Delete/expire a silence immediately. The matched alerts will resume sending notifications "
-            + "if still firing. Use this when: maintenance is complete early, issue was resolved, silence was created by mistake.")
-    public String deleteSilence(
-        @ToolArg(description = "The silence UUID to delete. Get this from getSilences tool output.") String silenceId
-    ) {
-        return alertmanagerService.deleteSilence(silenceId);
+    @Tool(description = "Delete a silence by ID. Get ID from getSilences output.")
+    public String deleteSilence(@ToolArg(description = "Silence UUID") String silenceId) {
+        if (silenceId == null || silenceId.isBlank()) {
+            return "Error: silenceId is required";
+        }
+
+        try {
+            return alertmanagerService.deleteSilence(silenceId.trim());
+        } catch (Exception e) {
+            LOG.errorf("Delete silence failed: %s", e.getMessage());
+            return formatError("Failed to delete silence", e);
+        }
     }
 
-    // =========================================================================
-    // Status Tools
-    // =========================================================================
-
-    @Tool(description = "Get Alertmanager server status including version, uptime, and cluster information. "
-            + "Use this to: verify Alertmanager is running, check cluster health in HA setups, "
-            + "get version info for troubleshooting, see peer connectivity status.")
+    @Tool(description = "Get Alertmanager server status: version, uptime, cluster info.")
     public String getAlertmanagerStatus() {
-        return alertmanagerService.getStatus();
+        try {
+            return alertmanagerService.getStatus();
+        } catch (Exception e) {
+            LOG.errorf("Get status failed: %s", e.getMessage());
+            return formatError("Failed to get status", e);
+        }
     }
 
-    @Tool(description = "List all configured notification receivers (where alerts are sent). "
-            + "Shows email addresses, Slack channels, PagerDuty services, webhook URLs, etc. "
-            + "Use this to: understand notification routing, verify receiver configuration, "
-            + "see which teams receive which alerts.")
+    @Tool(description = "List configured notification receivers (Slack, email, PagerDuty, etc.).")
     public String getReceivers() {
-        return alertmanagerService.getReceivers();
+        try {
+            return alertmanagerService.getReceivers();
+        } catch (Exception e) {
+            LOG.errorf("Get receivers failed: %s", e.getMessage());
+            return formatError("Failed to get receivers", e);
+        }
+    }
+
+    @Tool(description = "Get alerting summary: counts by severity, top alerts, affected namespaces.")
+    public String getAlertingSummary() {
+        try {
+            return alertmanagerService.getAlertingSummary();
+        } catch (Exception e) {
+            LOG.errorf("Get summary failed: %s", e.getMessage());
+            return formatError("Failed to get alerting summary", e);
+        }
+    }
+
+    @Tool(description = "Get critical severity alerts only. Prioritized for incident response.")
+    public String getCriticalAlerts() {
+        try {
+            return alertmanagerService.getCriticalAlerts();
+        } catch (Exception e) {
+            LOG.errorf("Get critical alerts failed: %s", e.getMessage());
+            return formatError("Failed to get critical alerts", e);
+        }
+    }
+
+    @Tool(description = "Investigate an alert: all instances, duration, labels, silences, recommendations.")
+    public String investigateAlert(@ToolArg(description = "Alert name to investigate") String alertName) {
+        if (alertName == null || alertName.isBlank()) {
+            return "Error: alertName is required";
+        }
+        if (alertName.length() > MAX_NAME_LENGTH) {
+            return "Error: alertName too long (max " + MAX_NAME_LENGTH + " chars)";
+        }
+
+        try {
+            return alertmanagerService.investigateAlert(alertName.trim());
+        } catch (Exception e) {
+            LOG.errorf("Investigate alert failed: %s", e.getMessage());
+            return formatError("Failed to investigate alert", e);
+        }
+    }
+
+    private String parseState(String state, String... validStates) {
+        if (state == null || state.isBlank()) {
+            return null;
+        }
+        String normalized = state.trim().toLowerCase();
+        for (String valid : validStates) {
+            if (valid.equals(normalized)) {
+                return normalized;
+            }
+        }
+        return null;
+    }
+
+    private String formatError(String message, Exception e) {
+        String detail = e.getMessage();
+        return (detail == null || detail.isBlank())
+                ? "Error: " + message
+                : "Error: " + message + " - " + detail;
     }
 }
