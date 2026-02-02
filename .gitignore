@@ -1,0 +1,20 @@
+# Build artifacts
+/mcp-alertmanager
+/dist/
+
+# Generated npm platform packages (created by make npm-copy-project-files)
+npm/mcp-alertmanager-darwin-*/
+npm/mcp-alertmanager-linux-*/
+npm/mcp-alertmanager-windows-*/
+npm/mcp-alertmanager/package.json
+npm/mcp-alertmanager/README.md
+npm/mcp-alertmanager/LICENSE
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
