@@ -83,6 +83,7 @@ make build
 | `--namespace` | Kubernetes namespace | `openshift-monitoring` |
 | `--service` | Kubernetes service name | `alertmanager-operated` |
 | `--service-port` | Kubernetes service port | `9093` |
+| `--service-scheme` | Service scheme (http/https) | `https` |
 | `--kubeconfig` | Path to kubeconfig file | auto-detect |
 
 **Precedence:** `--url` / `ALERTMANAGER_URL` > K8S auto-connect
