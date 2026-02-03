@@ -1,0 +1,13 @@
+apiVersion: v2
+name: mcp-alertmanager
+description: Helm Chart for the Alertmanager MCP Server
+home: https://github.com/jeanlopezxyz/mcp-alertmanager
+keywords:
+  - alertmanager
+  - mcp
+  - monitoring
+  - alerts
+maintainers:
+  - name: Jean Lopez
+version: 0.1.0
+appVersion: "latest"
