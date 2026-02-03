@@ -1,0 +1,9 @@
+kind: Task
+metadata:
+  name: "get-alerting-summary"
+prompt: "Get a summary of the current alerting status including counts by severity and top firing alerts"
+assertions:
+  toolsUsed:
+    - server: alertmanager
+      toolPattern: "(getAlertingSummary|getAlerts|getCriticalAlerts)"
+  minToolCalls: 1

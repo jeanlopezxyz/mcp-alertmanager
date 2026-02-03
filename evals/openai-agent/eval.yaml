@@ -1,0 +1,21 @@
+kind: Eval
+metadata:
+  name: "openai-agent-alertmanager-test"
+config:
+  agent:
+    type: "file"
+    path: agent.yaml
+  mcpConfigFile: ../mcp-config.yaml
+  llmJudge:
+    env:
+      baseUrlKey: JUDGE_BASE_URL
+      apiKeyKey: JUDGE_API_KEY
+      modelNameKey: JUDGE_MODEL_NAME
+  taskSets:
+    - glob: ../tasks/alertmanager/*.yaml
+      assertions:
+        toolsUsed:
+          - server: alertmanager
+            toolPattern: ".*"
+        minToolCalls: 1
+        maxToolCalls: 20
