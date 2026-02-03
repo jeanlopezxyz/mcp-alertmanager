@@ -1,12 +1,23 @@
 # Alertmanager MCP Server (Go)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/mcp-alertmanager)](https://www.npmjs.com/package/mcp-alertmanager)
+[![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://go.dev/)
+[![GitHub release](https://img.shields.io/github/v/release/jeanlopezxyz/mcp-alertmanager?sort=semver)](https://github.com/jeanlopezxyz/mcp-alertmanager/releases/latest)
+
 A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for Prometheus Alertmanager integration. Native Go binary with built-in Kubernetes connectivity via client-go.
 
 ## Installation
 
-### Claude Code
+### npx
 
-Add to `~/.claude/settings.json`:
+```bash
+npx -y mcp-alertmanager@latest
+```
+
+### MCP Client Configuration
+
+Add to your MCP client configuration (VS Code, Cursor, Windsurf, etc.):
 
 ```json
 {
@@ -22,22 +33,10 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-### Claude Desktop
+### VS Code
 
-Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "alertmanager": {
-      "command": "npx",
-      "args": ["-y", "mcp-alertmanager@latest"],
-      "env": {
-        "ALERTMANAGER_URL": "http://localhost:9093"
-      }
-    }
-  }
-}
+```shell
+code --add-mcp '{"name":"alertmanager","command":"npx","args":["-y","mcp-alertmanager@latest"],"env":{"ALERTMANAGER_URL":"http://localhost:9093"}}'
 ```
 
 ### Kubernetes Auto-Connect

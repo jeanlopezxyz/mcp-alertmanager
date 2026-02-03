@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.jeanlopezxyz/mcp-alertmanager",
+  "description": "A Model Context Protocol (MCP) server for Prometheus Alertmanager",
+  "repository": {
+    "url": "https://github.com/jeanlopezxyz/mcp-alertmanager",
+    "source": "github"
+  },
+  "version": "0.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "mcp-alertmanager",
+      "version": "0.0.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
