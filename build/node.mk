@@ -40,7 +40,8 @@ npm-copy-project-files: npm-copy-binaries ## Copy the project files to the main 
 	@echo '"keywords": ["mcp","alertmanager","prometheus","monitoring","model-context-protocol"],' >> $(MAIN_PACKAGE_JSON)
 	@echo '"license": "MIT",' >> $(MAIN_PACKAGE_JSON)
 	@echo '"bugs": {"url": "https://github.com/jeanlopezxyz/mcp-alertmanager/issues"},' >> $(MAIN_PACKAGE_JSON)
-	@echo '"homepage": "https://github.com/jeanlopezxyz/mcp-alertmanager#readme"' >> $(MAIN_PACKAGE_JSON)
+	@echo '"homepage": "https://github.com/jeanlopezxyz/mcp-alertmanager#readme",' >> $(MAIN_PACKAGE_JSON)
+	@echo '"mcpName": "io.github.jeanlopezxyz/mcp-alertmanager"' >> $(MAIN_PACKAGE_JSON)
 	@echo '}' >> $(MAIN_PACKAGE_JSON)
 	$(foreach os,$(OSES),$(foreach arch,$(ARCHS), \
 		OS_PACKAGE_JSON=./npm/$(NPM_PACKAGE)-$(os)-$(arch)/package.json; \
