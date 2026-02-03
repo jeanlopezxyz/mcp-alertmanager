@@ -41,18 +41,16 @@ code --add-mcp '{"name":"alertmanager","command":"npx","args":["-y","mcp-alertma
 
 ### Kubernetes Auto-Connect
 
-Connects directly to Alertmanager running in Kubernetes via the K8S API service proxy. Uses native kubeconfig/in-cluster config via client-go. No `kubectl` or port-forwarding required.
+Automatically connects to Alertmanager running in OpenShift/Kubernetes via the K8S API service proxy. Uses native kubeconfig/in-cluster config via client-go. No `kubectl` or port-forwarding required.
+
+Default: `openshift-monitoring/alertmanager-operated:9093`
 
 ```json
 {
   "mcpServers": {
     "alertmanager": {
       "command": "npx",
-      "args": ["-y", "mcp-alertmanager@latest"],
-      "env": {
-        "K8S_NAMESPACE": "openshift-monitoring",
-        "K8S_SERVICE": "alertmanager-main"
-      }
+      "args": ["-y", "mcp-alertmanager@latest"]
     }
   }
 }
@@ -73,24 +71,25 @@ make build
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ALERTMANAGER_URL` | Alertmanager API URL | `http://localhost:9093` |
+| Variable | Description |
+|----------|-------------|
+| `ALERTMANAGER_URL` | Direct Alertmanager API URL (overrides K8S auto-connect) |
 
-### Kubernetes Auto-Connect Variables
+### CLI Flags
 
-| Variable | Required | Description | Default |
-|----------|----------|-------------|---------|
-| `K8S_NAMESPACE` | Yes | Kubernetes namespace of the service | - |
-| `K8S_SERVICE` | Yes | Kubernetes service name | - |
-| `K8S_SERVICE_PORT` | No | Service port | `9093` |
-| `KUBECONFIG` | No | Path to kubeconfig file | `~/.kube/config` |
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--url` | Direct Alertmanager URL | - |
+| `--namespace` | Kubernetes namespace | `openshift-monitoring` |
+| `--service` | Kubernetes service name | `alertmanager-operated` |
+| `--service-port` | Kubernetes service port | `9093` |
+| `--kubeconfig` | Path to kubeconfig file | auto-detect |
 
-**Precedence:** `ALERTMANAGER_URL` > `K8S_NAMESPACE` + `K8S_SERVICE` > `http://localhost:9093`
+**Precedence:** `--url` / `ALERTMANAGER_URL` > K8S auto-connect
 
 **Connection strategy:**
-1. In-cluster config (when running inside a pod)
-2. Kubeconfig file (`KUBECONFIG` or `~/.kube/config`)
+1. Direct URL (if `--url` or `ALERTMANAGER_URL` is set)
+2. K8S API proxy (auto-detect kubeconfig or in-cluster config)
 
 ---
 

@@ -62,8 +62,8 @@ func newCommand() *cobra.Command {
 	cmd.Flags().IntVar(&o.LogLevel, "log-level", 0, "Set the log level (from 0 to 9)")
 	cmd.Flags().StringVar(&o.Port, "port", "", "Start a streamable HTTP server on the specified port (e.g. 8080)")
 	cmd.Flags().StringVar(&o.URL, "url", "", "Direct Alertmanager URL (e.g. http://localhost:9093). Overrides K8S auto-detect. Env: ALERTMANAGER_URL")
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "", "Kubernetes namespace for Alertmanager service (default: monitoring)")
-	cmd.Flags().StringVar(&o.Service, "service", "", "Kubernetes service name for Alertmanager (default: alertmanager-main)")
+	cmd.Flags().StringVar(&o.Namespace, "namespace", "", "Kubernetes namespace for Alertmanager service (default: openshift-monitoring)")
+	cmd.Flags().StringVar(&o.Service, "service", "", "Kubernetes service name for Alertmanager (default: alertmanager-operated)")
 	cmd.Flags().StringVar(&o.ServicePort, "service-port", "", "Kubernetes service port for Alertmanager (default: 9093)")
 	cmd.Flags().StringVar(&o.Kubeconfig, "kubeconfig", "", "Path to kubeconfig file (default: auto-detect)")
 
@@ -159,10 +159,10 @@ func (o *options) resolveConnection() (string, *http.Client, error) {
 
 	// 2. K8S auto-detect via kubeconfig or in-cluster
 	if kubernetes.CanConnectToCluster(o.Kubeconfig) {
-		namespace := kubernetes.DetectNamespace(o.Namespace, "monitoring")
+		namespace := kubernetes.DetectNamespace(o.Namespace, "openshift-monitoring")
 		service := o.Service
 		if service == "" {
-			service = "alertmanager-main"
+			service = "alertmanager-operated"
 		}
 		port := o.ServicePort
 		if port == "" {
@@ -185,12 +185,12 @@ Configure one of the following:
   # Environment variable
   ALERTMANAGER_URL=http://alertmanager:9093 %[1]s
 
-  # Kubernetes auto-detect with defaults (monitoring/alertmanager-main:9093)
+  # Kubernetes auto-detect with defaults (openshift-monitoring/alertmanager-operated:9093)
   # Requires a valid kubeconfig or in-cluster service account
   %[1]s
 
   # Custom namespace/service
-  %[1]s --namespace openshift-monitoring --service alertmanager-main
+  %[1]s --namespace openshift-monitoring --service alertmanager-operated
 
   # Explicit kubeconfig
   %[1]s --kubeconfig /path/to/kubeconfig`, version.BinaryName)
