@@ -162,6 +162,52 @@ podman build -f Containerfile -t mcp-alertmanager .
 
 ---
 
+## Kubernetes / OpenShift Deployment
+
+### Container Image
+
+The container image is available on GitHub Container Registry:
+
+```
+ghcr.io/jeanlopezxyz/mcp-alertmanager:latest
+```
+
+### Helm Chart
+
+Deploy using the included Helm chart:
+
+```bash
+# Add the chart repository (or use local chart)
+helm upgrade --install mcp-alertmanager ./charts/mcp-alertmanager \
+  --namespace mcp-servers \
+  --create-namespace \
+  --set openshift=true
+```
+
+#### Helm Values
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `image.registry` | Container registry | `ghcr.io` |
+| `image.repository` | Image repository | `jeanlopezxyz/mcp-alertmanager` |
+| `image.version` | Image tag | `latest` |
+| `openshift` | Enable OpenShift Routes | `false` |
+| `service.port` | Service port | `8080` |
+| `alertmanager.namespace` | Alertmanager namespace | `openshift-monitoring` |
+| `alertmanager.service` | Alertmanager service name | `alertmanager-operated` |
+| `rbac.useClusterReader` | Use cluster-reader role | `true` |
+
+#### Example with custom Alertmanager
+
+```bash
+helm upgrade --install mcp-alertmanager ./charts/mcp-alertmanager \
+  --namespace mcp-servers \
+  --set openshift=true \
+  --set alertmanager.url=http://alertmanager.monitoring:9093
+```
+
+---
+
 ## License
 
 [MIT](LICENSE)
