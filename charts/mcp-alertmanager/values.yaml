@@ -27,7 +27,15 @@ rbac:
   create: true
   # -- Use cluster-reader role for read-only access to cluster resources
   useClusterReader: true
+  # -- Additional ClusterRoleBindings
   extraClusterRoleBindings: []
+  # -- Additional namespace-scoped RoleBindings (e.g., for OpenShift monitoring access)
+  extraRoleBindings:
+    - name: monitoring-alertmanager-view
+      namespace: openshift-monitoring
+      roleRef:
+        kind: Role
+        name: monitoring-alertmanager-view
 
 # -- Pod annotations
 podAnnotations: {}
